@@ -1,6 +1,20 @@
 import React from "react";
 import { Icon } from "./icons.jsx";
 import { PHONE_DISPLAY, PHONE_E164, WA_GENERIC, WA_NUMBER, FB_URL, FB_LABEL, EMAIL, WEB, MESSAGE_MAX } from "./constants.js";
+import { trackEvent } from "./analytics.js";
+
+const trackContactClick = (method, location, extra = {}) => {
+  trackEvent(`${method}_click`, {
+    contact_method: method,
+    link_location: location,
+    ...extra,
+  });
+};
+
+const handleContactCta = (location, onContact) => {
+  trackEvent("quote_cta_click", { link_location: location });
+  onContact();
+};
 
 // ---------- Header -----------------------------------------------------
 export const Header = ({ onContact }) => (
@@ -11,15 +25,15 @@ export const Header = ({ onContact }) => (
         <div className="l-header__brand">CA Electric<small>Sabemos todo de electricidad</small></div>
       </a>
       <nav className="l-header__nav" aria-label="Principal">
-        <a href="#servicios">Servicios</a>
-        <a href="#solar">Solar</a>
-        <a href="#proceso">Proceso</a>
-        <a href="#nosotros">Nosotros</a>
-        <a href="#contacto">Contacto</a>
+        <a href="#servicios" onClick={() => trackEvent("nav_click", { nav_item: "Servicios", target_section: "servicios" })}>Servicios</a>
+        <a href="#solar" onClick={() => trackEvent("nav_click", { nav_item: "Solar", target_section: "solar" })}>Solar</a>
+        <a href="#proceso" onClick={() => trackEvent("nav_click", { nav_item: "Proceso", target_section: "proceso" })}>Proceso</a>
+        <a href="#nosotros" onClick={() => trackEvent("nav_click", { nav_item: "Nosotros", target_section: "nosotros" })}>Nosotros</a>
+        <a href="#contacto" onClick={() => trackEvent("nav_click", { nav_item: "Contacto", target_section: "contacto" })}>Contacto</a>
       </nav>
       <div className="l-header__cta">
-        <a className="btn btn-ghost" href={`tel:${PHONE_E164}`}><Icon name="phone" size={16}/> {PHONE_DISPLAY}</a>
-        <button className="btn btn-yellow" type="button" onClick={onContact}>Cotiza hoy <span className="dot">→</span></button>
+        <a className="btn btn-ghost" href={`tel:${PHONE_E164}`} onClick={() => trackContactClick("phone", "header")}><Icon name="phone" size={16}/> {PHONE_DISPLAY}</a>
+        <button className="btn btn-yellow" type="button" onClick={() => handleContactCta("header", onContact)}>Cotiza hoy <span className="dot">→</span></button>
       </div>
     </div>
   </header>
@@ -47,8 +61,8 @@ export const Hero = ({ onContact }) => (
           <li><span className="check">✓</span>Media tensión</li>
         </ul>
         <div className="hero__actions">
-          <button className="btn btn-primary btn-lg" type="button" onClick={onContact}>Solicita cotización <span className="dot">→</span></button>
-          <a className="btn btn-wa btn-lg" href={WA_GENERIC} target="_blank" rel="noopener noreferrer"><Icon name="wa" size={18}/> WhatsApp</a>
+          <button className="btn btn-primary btn-lg" type="button" onClick={() => handleContactCta("hero", onContact)}>Solicita cotización <span className="dot">→</span></button>
+          <a className="btn btn-wa btn-lg" href={WA_GENERIC} target="_blank" rel="noopener noreferrer" onClick={() => trackContactClick("whatsapp", "hero")}><Icon name="wa" size={18}/> WhatsApp</a>
         </div>
       </div>
       <div className="hero__media">
@@ -89,7 +103,21 @@ export const Services = ({ onContact }) => (
       <p className="l-section-lead">Cubrimos todo el ciclo eléctrico: desde una falla puntual hasta proyectos de media tensión. Trabajo certificado, materiales de calidad y garantía por escrito.</p>
       <div className="svc-grid">
         {SERVICES.map((s) => (
-          <div className="svc-card" key={s.title} onClick={onContact} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onContact()}>
+          <div
+            className="svc-card"
+            key={s.title}
+            onClick={() => {
+              trackEvent("service_card_click", { service_name: s.title });
+              onContact();
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" && e.key !== " ") return;
+              trackEvent("service_card_click", { service_name: s.title, interaction_type: "keyboard" });
+              onContact();
+            }}
+          >
             <div className="hex"><Icon name={s.ico} size={26}/></div>
             <h3>{s.title}</h3>
             <p>{s.desc}</p>
@@ -131,8 +159,8 @@ export const Solar = ({ onContact }) => (
           <li><span className="ico">✓</span>Soporte técnico durante toda la vida útil</li>
         </ul>
         <div className="solar__cta">
-          <button className="btn btn-primary btn-lg" type="button" onClick={onContact}>Solicita tu cotización <span className="dot"><Icon name="arrow" size={12}/></span></button>
-          <a className="btn btn-outline btn-lg" href={WA_GENERIC} target="_blank" rel="noopener noreferrer"><Icon name="wa" size={16}/> WhatsApp</a>
+          <button className="btn btn-primary btn-lg" type="button" onClick={() => handleContactCta("solar", onContact)}>Solicita tu cotización <span className="dot"><Icon name="arrow" size={12}/></span></button>
+          <a className="btn btn-outline btn-lg" href={WA_GENERIC} target="_blank" rel="noopener noreferrer" onClick={() => trackContactClick("whatsapp", "solar")}><Icon name="wa" size={16}/> WhatsApp</a>
         </div>
       </div>
       <div className="solar__media">
@@ -239,7 +267,7 @@ export const Urgency = () => (
           <div className="urg__warn"><Icon name="alert" size={42}/></div>
           <h2>¿Tu instalación es <span className="y">segura?</span></h2>
           <p>Podría ser más grave de lo que crees. No ignores una falla eléctrica — un diagnóstico especializado evita riesgos, incendios y reparaciones costosas.</p>
-          <a href={`tel:${PHONE_E164}`} className="urg__phone"><span className="pcircle"><Icon name="phone" size={16}/></span> {PHONE_DISPLAY}</a>
+          <a href={`tel:${PHONE_E164}`} className="urg__phone" onClick={() => trackContactClick("phone", "urgency_section")}><span className="pcircle"><Icon name="phone" size={16}/></span> {PHONE_DISPLAY}</a>
         </div>
         <div className="urg__media">
           <picture>
@@ -318,7 +346,15 @@ export const FAQ = () => {
         <div className="faq">
           {FAQS.map((f, i) => (
             <div className={"faq__item " + (open === i ? "open" : "")} key={i}>
-              <button type="button" className="faq__q" onClick={() => setOpen(open === i ? -1 : i)} aria-expanded={open === i}>
+              <button
+                type="button"
+                className="faq__q"
+                onClick={() => {
+                  if (open !== i) trackEvent("faq_open", { faq_question: f.q });
+                  setOpen(open === i ? -1 : i);
+                }}
+                aria-expanded={open === i}
+              >
                 <span>{f.q}</span><span className="plus" aria-hidden="true">+</span>
               </button>
               <div className="faq__a"><div>{f.a}</div></div>
@@ -346,7 +382,14 @@ const SERVICE_OPTIONS = [
 
 export const ContactForm = () => {
   const [data, setData] = React.useState({ name: "", phone: "", service: SERVICE_OPTIONS[0], message: "" });
+  const hasTrackedFormStart = React.useRef(false);
   const set = (k) => (e) => setData((d) => ({ ...d, [k]: e.target.value }));
+
+  const trackFormStart = () => {
+    if (hasTrackedFormStart.current) return;
+    hasTrackedFormStart.current = true;
+    trackEvent("contact_form_start", { form_name: "whatsapp_quote" });
+  };
 
   const submit = (e) => {
     e.preventDefault();
@@ -358,6 +401,12 @@ export const ContactForm = () => {
     if (data.message.trim()) lines.push(`Mensaje: ${data.message.trim()}`);
     const text = lines.join("\n");
     const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
+    trackEvent("contact_form_submit", {
+      form_name: "whatsapp_quote",
+      service_name: data.service,
+      has_message: Boolean(data.message.trim()),
+      message_length: data.message.trim().length,
+    });
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -377,14 +426,14 @@ export const ContactForm = () => {
             <h3>Habla con un <span className="y">ingeniero</span></h3>
             <p>Atención directa, sin call-centers. Te contesta quien va a hacer el trabajo.</p>
             <div className="info">
-              <a href={`tel:${PHONE_E164}`}><span className="ico"><Icon name="phone" size={16}/></span> {PHONE_DISPLAY}</a>
-              <a href={WA_GENERIC} target="_blank" rel="noopener noreferrer"><span className="ico"><Icon name="wa" size={16}/></span> WhatsApp</a>
-              <a href={`mailto:${EMAIL}`}><span className="ico"><Icon name="mail" size={16}/></span> {EMAIL}</a>
-              <a href={FB_URL} target="_blank" rel="noopener noreferrer"><span className="ico"><Icon name="facebook" size={16}/></span> {FB_LABEL}</a>
-              <a href={`https://${WEB}`} target="_blank" rel="noopener noreferrer"><span className="ico"><Icon name="map" size={16}/></span> {WEB}</a>
+              <a href={`tel:${PHONE_E164}`} onClick={() => trackContactClick("phone", "contact_panel")}><span className="ico"><Icon name="phone" size={16}/></span> {PHONE_DISPLAY}</a>
+              <a href={WA_GENERIC} target="_blank" rel="noopener noreferrer" onClick={() => trackContactClick("whatsapp", "contact_panel")}><span className="ico"><Icon name="wa" size={16}/></span> WhatsApp</a>
+              <a href={`mailto:${EMAIL}`} onClick={() => trackContactClick("email", "contact_panel")}><span className="ico"><Icon name="mail" size={16}/></span> {EMAIL}</a>
+              <a href={FB_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackContactClick("facebook", "contact_panel")}><span className="ico"><Icon name="facebook" size={16}/></span> {FB_LABEL}</a>
+              <a href={`https://${WEB}`} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("website_click", { link_location: "contact_panel" })}><span className="ico"><Icon name="map" size={16}/></span> {WEB}</a>
             </div>
           </div>
-          <form className="form-wrap" onSubmit={submit} noValidate={false}>
+          <form className="form-wrap" onSubmit={submit} onFocusCapture={trackFormStart} noValidate={false}>
             <div className="form-grid">
               <div className="field">
                 <label htmlFor="f-name">Nombre</label>
@@ -427,7 +476,7 @@ export const ContactForm = () => {
 
 // ---------- Sticky WhatsApp FAB ---------------------------------------
 export const WhatsAppFab = () => (
-  <a className="wa-fab" href={WA_GENERIC} target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp">
+  <a className="wa-fab" href={WA_GENERIC} target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp" onClick={() => trackContactClick("whatsapp", "floating_button")}>
     <Icon name="wa" size={32}/>
   </a>
 );
@@ -449,31 +498,31 @@ export const Footer = () => (
             Ingeniería en energías renovables, instalaciones eléctricas y sistemas solares. Zacatecas y alrededores — residencial, comercial e industrial.
           </p>
           <div className="social">
-            <a href={FB_URL} target="_blank" rel="noopener noreferrer" aria-label="Facebook"><Icon name="facebook" size={18}/></a>
-            <a href={WA_GENERIC} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="wa" size={18}/></a>
-            <a href={`tel:${PHONE_E164}`} aria-label="Teléfono"><Icon name="phone" size={18}/></a>
-            <a href={`mailto:${EMAIL}`} aria-label="Correo"><Icon name="mail" size={18}/></a>
+            <a href={FB_URL} target="_blank" rel="noopener noreferrer" aria-label="Facebook" onClick={() => trackContactClick("facebook", "footer_social")}><Icon name="facebook" size={18}/></a>
+            <a href={WA_GENERIC} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" onClick={() => trackContactClick("whatsapp", "footer_social")}><Icon name="wa" size={18}/></a>
+            <a href={`tel:${PHONE_E164}`} aria-label="Teléfono" onClick={() => trackContactClick("phone", "footer_social")}><Icon name="phone" size={18}/></a>
+            <a href={`mailto:${EMAIL}`} aria-label="Correo" onClick={() => trackContactClick("email", "footer_social")}><Icon name="mail" size={18}/></a>
           </div>
         </div>
         <div>
           <h4>Servicios</h4>
           <ul>
-            <li><a href="#solar">Paneles solares</a></li>
-            <li><a href="#servicios">Instalaciones eléctricas</a></li>
-            <li><a href="#servicios">Calentadores solares</a></li>
-            <li><a href="#servicios">Puesta a tierra</a></li>
-            <li><a href="#servicios">Plantas de emergencia</a></li>
-            <li><a href="#servicios">Media tensión</a></li>
+            <li><a href="#solar" onClick={() => trackEvent("footer_link_click", { link_text: "Paneles solares", target_section: "solar" })}>Paneles solares</a></li>
+            <li><a href="#servicios" onClick={() => trackEvent("footer_link_click", { link_text: "Instalaciones eléctricas", target_section: "servicios" })}>Instalaciones eléctricas</a></li>
+            <li><a href="#servicios" onClick={() => trackEvent("footer_link_click", { link_text: "Calentadores solares", target_section: "servicios" })}>Calentadores solares</a></li>
+            <li><a href="#servicios" onClick={() => trackEvent("footer_link_click", { link_text: "Puesta a tierra", target_section: "servicios" })}>Puesta a tierra</a></li>
+            <li><a href="#servicios" onClick={() => trackEvent("footer_link_click", { link_text: "Plantas de emergencia", target_section: "servicios" })}>Plantas de emergencia</a></li>
+            <li><a href="#servicios" onClick={() => trackEvent("footer_link_click", { link_text: "Media tensión", target_section: "servicios" })}>Media tensión</a></li>
           </ul>
         </div>
         <div>
           <h4>Empresa</h4>
           <ul>
-            <li><a href="#nosotros">Nosotros</a></li>
-            <li><a href="#proceso">Cómo trabajamos</a></li>
-            <li><a href="#cobertura">Cobertura</a></li>
-            <li><a href="#casos">Casos</a></li>
-            <li><a href="#contacto">Contacto</a></li>
+            <li><a href="#nosotros" onClick={() => trackEvent("footer_link_click", { link_text: "Nosotros", target_section: "nosotros" })}>Nosotros</a></li>
+            <li><a href="#proceso" onClick={() => trackEvent("footer_link_click", { link_text: "Cómo trabajamos", target_section: "proceso" })}>Cómo trabajamos</a></li>
+            <li><a href="#cobertura" onClick={() => trackEvent("footer_link_click", { link_text: "Cobertura", target_section: "cobertura" })}>Cobertura</a></li>
+            <li><a href="#casos" onClick={() => trackEvent("footer_link_click", { link_text: "Casos", target_section: "casos" })}>Casos</a></li>
+            <li><a href="#contacto" onClick={() => trackEvent("footer_link_click", { link_text: "Contacto", target_section: "contacto" })}>Contacto</a></li>
           </ul>
         </div>
         <div>
