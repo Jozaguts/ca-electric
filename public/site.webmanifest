@@ -1,0 +1,17 @@
+{
+  "name": "CA Electric",
+  "short_name": "CA Electric",
+  "description": "Servicios electricos y paneles solares en Zacatecas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#075591",
+  "icons": [
+    {
+      "src": "/assets/logo.png",
+      "sizes": "512x473",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
